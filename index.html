@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard SST Automatizado</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f6f9;
+}
+
+header {
+    background-color: #0d2c54;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.kpi {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.green { color: #2e7d32; }
+.red { color: #c62828; }
+
+.meta {
+    font-size: 13px;
+    color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Dashboard Estratégico SST</h1>
+<p>Cálculo automático desde Excel en OneDrive</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Índice de Frecuencia (IF)</h3>
+<div id="ifValue" class="kpi">Cargando...</div>
+<p class="meta">Meta recomendada: ≤ 3.0</p>
+</div>
+
+<div class="card">
+<h3>Índice de Gravedad (IG)</h3>
+<div id="igValue" class="kpi">Cargando...</div>
+<p class="meta">Meta recomendada: ≤ 100</p>
+</div>
+
+<div class="card">
+<h3>Cumplimiento de Inspecciones</h3>
+<div id="inspValue" class="kpi">Cargando...</div>
+<p class="meta">Meta recomendada: ≥ 95%</p>
+</div>
+
+<div class="card">
+<h3>Cierre de Hallazgos</h3>
+<div id="hallValue" class="kpi">Cargando...</div>
+<p class="meta">Meta recomendada: ≥ 95%</p>
+</div>
+
+</div>
+
+<script>
+
+async function cargarExcel() {
+
+    const url = "https://1drv.ms/x/c/7bed2975415899d6/IQBct-WV6dFYQpgCArPaNiBgAWJVyGJC5CyKzHx-zAlEk6Q?e=UQZciD&format=csv";
+
+    const response = await fetch(url);
+    const texto = await response.text();
+
+    const filas = texto.trim().split("\n").slice(1);
+
+    let totalHoras = 0;
+    let totalAccidentes = 0;
+    let totalDias = 0;
+    let totalInspProg = 0;
+    let totalInspEjec = 0;
+    let totalHallAb = 0;
+    let totalHallCer = 0;
+
+    filas.forEach(fila => {
+        const columnas = fila.split(",");
+
+        totalHoras += parseFloat(columnas[1]) || 0;
+        totalAccidentes += parseFloat(columnes[2]) || 0;
+        totalDias += parseFloat(columnas[3]) || 0;
+        totalInspProg += parseFloat(columnas[4]) || 0;
+        totalInspEjec += parseFloat(columnas[5]) || 0;
+        totalHallAb += parseFloat(columnas[6]) || 0;
+        totalHallCer += parseFloat(columnas[7]) || 0;
+    });
+
+    const IF = (totalAccidentes / totalHoras) * 200000;
+    const IG = (totalDias / totalHoras) * 200000;
+    const cumplimientoInspecciones = (totalInspEjec / totalInspProg) * 100;
+    const cierreHallazgos = (totalHallCer / totalHallAb) * 100;
+
+    document.getElementById("ifValue").innerText = IF.toFixed(2);
+    document.getElementById("igValue").innerText = IG.toFixed(2);
+    document.getElementById("inspValue").innerText = cumplimientoInspecciones.toFixed(1) + "%";
+    document.getElementById("hallValue").innerText = cierreHallazgos.toFixed(1) + "%";
+}
+
+cargarExcel();
+
+</script>
+
+</body>
+</html>
