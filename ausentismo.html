@@ -10,11 +10,41 @@
 
 <style>
 body { font-family: Arial; margin:0; background:#f3efe9; }
-header { display:flex; justify-content:space-between; align-items:center; padding:20px 40px; background:#5a3e2b; color:white; }
+
+header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+    background:#5a3e2b;
+    color:white;
+}
+
 .container { padding:30px; }
-.card { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 6px 18px rgba(90,62,43,0.15); }
-select { margin:5px; padding:8px; border-radius:6px; border:1px solid #cbb8a8; }
-button { background:#6f4e37; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; }
+
+.card {
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    margin-bottom:25px;
+    box-shadow:0 6px 18px rgba(90,62,43,0.15);
+}
+
+select {
+    margin:5px;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #cbb8a8;
+}
+
+button {
+    background:#6f4e37;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:6px;
+    cursor:pointer;
+}
 </style>
 </head>
 
@@ -51,7 +81,7 @@ button { background:#6f4e37; color:white; border:none; padding:8px 15px; border-
 let datos = [];
 let chart;
 
-const url = "PEGA_AQUI_TU_LINK_CSV_AUSENTISMO";
+const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
 
 async function cargarDatos() {
     const response = await fetch(url);
@@ -94,86 +124,4 @@ function obtenerFiltros() {
         mes: document.getElementById("mesSelect").value || "Todos",
         nombre: document.getElementById("nombreSelect").value || "Todos",
         codigo: document.getElementById("codigoSelect").value || "Todos",
-        enfermedad: document.getElementById("enfermedadSelect").value || "Todos",
-        origen: document.getElementById("origenSelect").value || "Todos"
-    };
-}
-
-function aplicarFiltros(filtros) {
-    return datos.filter(d =>
-        (filtros.mes === "Todos" || d.mes === filtros.mes) &&
-        (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
-        (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
-        (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
-        (filtros.origen === "Todos" || d.origen === filtros.origen)
-    );
-}
-
-function obtenerUnicos(array, campo) {
-    return [...new Set(array.map(d => d[campo]))];
-}
-
-function llenarSelect(id, valores) {
-    const select = document.getElementById(id);
-    const valorActual = select.value;
-
-    select.innerHTML = '<option value="Todos">Todos</option>';
-
-    valores.forEach(v => {
-        let option = document.createElement("option");
-        option.value = v;
-        option.text = v;
-        select.appendChild(option);
-    });
-
-    if (valores.includes(valorActual)) select.value = valorActual;
-
-    select.onchange = actualizarTodo;
-}
-
-function actualizarGrafica() {
-
-    const filtros = obtenerFiltros();
-    const filtrados = aplicarFiltros(filtros);
-
-    let agrupado = {};
-    filtrados.forEach(d => {
-        if (!agrupado[d.mes]) agrupado[d.mes] = 0;
-        agrupado[d.mes] += d.dias;
-    });
-
-    const labels = Object.keys(agrupado);
-    const valores = Object.values(agrupado);
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(document.getElementById("chart"), {
-        type: "pie",
-        data: {
-            labels: labels,
-            datasets: [{
-                data: valores,
-                backgroundColor: ["#6f4e37","#8b5e3c","#a97450","#c19a6b","#d2b48c","#5c4033"]
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    color: "#fff",
-                    formatter: function(value, context) {
-                        let total = context.chart._metasets[0].total;
-                        let percentage = (value / total * 100).toFixed(1) + "%";
-                        return value + " días\n" + percentage;
-                    }
-                }
-            }
-        },
-        plugins: [ChartDataLabels]
-    });
-}
-
-cargarDatos();
-
-</script>
-</body>
-</html>
+        enfermedad: document.getElementById("enfermeda
