@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Estratégico SST</title>
+<title>Dashboard Ausentismo SST</title>
 
 <style>
 body {
@@ -33,10 +33,6 @@ header {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.card h3 {
-    margin-top: 0;
-}
-
 .kpi {
     font-size: 32px;
     font-weight: bold;
@@ -53,34 +49,34 @@ header {
 <body>
 
 <header>
-<h1>Dashboard Estratégico SST</h1>
-<p>Cálculo automático desde Google Sheets</p>
+<h1>Dashboard Ausentismo 2025</h1>
+<p>Análisis automático desde Google Sheets</p>
 </header>
 
 <div class="container">
 
 <div class="card">
-<h3>Índice de Frecuencia (IF)</h3>
-<div id="ifValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada ≤ 3.0</p>
+<h3>Total Casos</h3>
+<div id="totalCasos" class="kpi">Cargando...</div>
+<p class="meta">Número total de incapacidades registradas</p>
 </div>
 
 <div class="card">
-<h3>Índice de Gravedad (IG)</h3>
-<div id="igValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada ≤ 100</p>
+<h3>Total Días Perdidos</h3>
+<div id="totalDias" class="kpi">Cargando...</div>
+<p class="meta">Suma de días de incapacidad</p>
 </div>
 
 <div class="card">
-<h3>Cumplimiento de Inspecciones</h3>
-<div id="inspValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada ≥ 95%</p>
+<h3>Promedio Días por Caso</h3>
+<div id="promedioDias" class="kpi">Cargando...</div>
+<p class="meta">Días promedio por incapacidad</p>
 </div>
 
 <div class="card">
-<h3>Cierre de Hallazgos</h3>
-<div id="hallValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada ≥ 95%</p>
+<h3>% Origen Laboral</h3>
+<div id="origenLaboral" class="kpi">Cargando...</div>
+<p class="meta">Porcentaje de casos de origen laboral</p>
 </div>
 
 </div>
@@ -96,35 +92,29 @@ async function cargarDatos() {
 
     const filas = texto.trim().split("\n").slice(1);
 
-    let totalHoras = 0;
-    let totalAccidentes = 0;
+    let totalCasos = filas.length;
     let totalDias = 0;
-    let totalInspProg = 0;
-    let totalInspEjec = 0;
-    let totalHallAb = 0;
-    let totalHallCer = 0;
+    let casosLaborales = 0;
 
     filas.forEach(fila => {
         const columnas = fila.split(",");
 
-        totalHoras += parseFloat(columnas[1]) || 0;
-        totalAccidentes += parseFloat(columnas[2]) || 0;
-        totalDias += parseFloat(columnas[3]) || 0;
-        totalInspProg += parseFloat(columnas[4]) || 0;
-        totalInspEjec += parseFloat(columnas[5]) || 0;
-        totalHallAb += parseFloat(columnas[6]) || 0;
-        totalHallCer += parseFloat(columnas[7]) || 0;
+        // Columna 8 = DIAS INCAPACIDAD
+        totalDias += parseFloat(columnas[7]) || 0;
+
+        // Columna 11 = ORIGEN
+        if (columnas[10] && columnas[10].toLowerCase().includes("laboral")) {
+            casosLaborales++;
+        }
     });
 
-    const IF = (totalAccidentes / totalHoras) * 200000;
-    const IG = (totalDias / totalHoras) * 200000;
-    const cumplimientoInspecciones = (totalInspEjec / totalInspProg) * 100;
-    const cierreHallazgos = (totalHallCer / totalHallAb) * 100;
+    const promedioDias = totalDias / totalCasos;
+    const porcentajeLaboral = (casosLaborales / totalCasos) * 100;
 
-    document.getElementById("ifValue").innerText = IF.toFixed(2);
-    document.getElementById("igValue").innerText = IG.toFixed(2);
-    document.getElementById("inspValue").innerText = cumplimientoInspecciones.toFixed(1) + "%";
-    document.getElementById("hallValue").innerText = cierreHallazgos.toFixed(1) + "%";
+    document.getElementById("totalCasos").innerText = totalCasos;
+    document.getElementById("totalDias").innerText = totalDias;
+    document.getElementById("promedioDias").innerText = promedioDias.toFixed(1);
+    document.getElementById("origenLaboral").innerText = porcentajeLaboral.toFixed(1) + "%";
 }
 
 cargarDatos();
