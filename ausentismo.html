@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ausentismo SST</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<style>
+body { font-family: Arial; margin:0; background:#f3efe9; }
+header { display:flex; justify-content:space-between; align-items:center; padding:20px 40px; background:#5a3e2b; color:white; }
+.container { padding:30px; }
+.card { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 6px 18px rgba(90,62,43,0.15); }
+select { margin:5px; padding:8px; border-radius:6px; border:1px solid #cbb8a8; }
+button { background:#6f4e37; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<header>
+<div>
+<h1 style="margin:0;">Módulo Ausentismo</h1>
+<p style="margin:0;">Análisis Estratégico</p>
+</div>
+<button onclick="location.href='index.html'">⬅ Volver</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Filtros</h3>
+<select id="mesSelect"></select>
+<select id="nombreSelect"></select>
+<select id="codigoSelect"></select>
+<select id="enfermedadSelect"></select>
+<select id="origenSelect"></select>
+</div>
+
+<div class="card">
+<h3>Distribución de Días de Incapacidad</h3>
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<script>
+
+let datos = [];
+let chart;
+
+const url = "PEGA_AQUI_TU_LINK_CSV_AUSENTISMO";
+
+async function cargarDatos() {
+    const response = await fetch(url);
+    const texto = await response.text();
+    const filas = texto.trim().split("\n").slice(1);
+
+    filas.forEach(fila => {
+        const c = fila.split(",");
+        datos.push({
+            mes: c[1],
+            nombre: c[3],
+            codigo: c[5],
+            enfermedad: c[6],
+            dias: parseFloat(c[7]) || 0,
+            origen: c[10]
+        });
+    });
+
+    actualizarTodo();
+}
+
+function actualizarTodo() {
+    actualizarDropdowns();
+    actualizarGrafica();
+}
+
+function actualizarDropdowns() {
+    const filtros = obtenerFiltros();
+    const filtrados = aplicarFiltros(filtros);
+
+    llenarSelect("mesSelect", obtenerUnicos(filtrados, "mes"));
+    llenarSelect("nombreSelect", obtenerUnicos(filtrados, "nombre"));
+    llenarSelect("codigoSelect", obtenerUnicos(filtrados, "codigo"));
+    llenarSelect("enfermedadSelect", obtenerUnicos(filtrados, "enfermedad"));
+    llenarSelect("origenSelect", obtenerUnicos(filtrados, "origen"));
+}
+
+function obtenerFiltros() {
+    return {
+        mes: document.getElementById("mesSelect").value || "Todos",
+        nombre: document.getElementById("nombreSelect").value || "Todos",
+        codigo: document.getElementById("codigoSelect").value || "Todos",
+        enfermedad: document.getElementById("enfermedadSelect").value || "Todos",
+        origen: document.getElementById("origenSelect").value || "Todos"
+    };
+}
+
+function aplicarFiltros(filtros) {
+    return datos.filter(d =>
+        (filtros.mes === "Todos" || d.mes === filtros.mes) &&
+        (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
+        (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
+        (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
+        (filtros.origen === "Todos" || d.origen === filtros.origen)
+    );
+}
+
+function obtenerUnicos(array, campo) {
+    return [...new Set(array.map(d => d[campo]))];
+}
+
+function llenarSelect(id, valores) {
+    const select = document.getElementById(id);
+    const valorActual = select.value;
+
+    select.innerHTML = '<option value="Todos">Todos</option>';
+
+    valores.forEach(v => {
+        let option = document.createElement("option");
+        option.value = v;
+        option.text = v;
+        select.appendChild(option);
+    });
+
+    if (valores.includes(valorActual)) select.value = valorActual;
+
+    select.onchange = actualizarTodo;
+}
+
+function actualizarGrafica() {
+
+    const filtros = obtenerFiltros();
+    const filtrados = aplicarFiltros(filtros);
+
+    let agrupado = {};
+    filtrados.forEach(d => {
+        if (!agrupado[d.mes]) agrupado[d.mes] = 0;
+        agrupado[d.mes] += d.dias;
+    });
+
+    const labels = Object.keys(agrupado);
+    const valores = Object.values(agrupado);
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("chart"), {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: ["#6f4e37","#8b5e3c","#a97450","#c19a6b","#d2b48c","#5c4033"]
+            }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    color: "#fff",
+                    formatter: function(value, context) {
+                        let total = context.chart._metasets[0].total;
+                        let percentage = (value / total * 100).toFixed(1) + "%";
+                        return value + " días\n" + percentage;
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+cargarDatos();
+
+</script>
+</body>
+</html>
