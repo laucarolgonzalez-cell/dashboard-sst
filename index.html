@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard SST Automatizado</title>
+<title>Dashboard Estratégico SST</title>
 
 <style>
 body {
@@ -13,15 +13,15 @@ body {
 }
 
 header {
-    background-color: #0d2c54;
+    background-color: #163a63;
     color: white;
-    padding: 20px;
+    padding: 25px;
     text-align: center;
 }
 
 .container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     padding: 20px;
 }
@@ -29,18 +29,19 @@ header {
 .card {
     background: white;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    margin-top: 0;
 }
 
 .kpi {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
     margin-top: 10px;
 }
-
-.green { color: #2e7d32; }
-.red { color: #c62828; }
 
 .meta {
     font-size: 13px;
@@ -53,7 +54,7 @@ header {
 
 <header>
 <h1>Dashboard Estratégico SST</h1>
-<p>Cálculo automático desde Excel en OneDrive</p>
+<p>Cálculo automático desde Google Sheets</p>
 </header>
 
 <div class="container">
@@ -61,34 +62,34 @@ header {
 <div class="card">
 <h3>Índice de Frecuencia (IF)</h3>
 <div id="ifValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada: ≤ 3.0</p>
+<p class="meta">Meta recomendada ≤ 3.0</p>
 </div>
 
 <div class="card">
 <h3>Índice de Gravedad (IG)</h3>
 <div id="igValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada: ≤ 100</p>
+<p class="meta">Meta recomendada ≤ 100</p>
 </div>
 
 <div class="card">
 <h3>Cumplimiento de Inspecciones</h3>
 <div id="inspValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada: ≥ 95%</p>
+<p class="meta">Meta recomendada ≥ 95%</p>
 </div>
 
 <div class="card">
 <h3>Cierre de Hallazgos</h3>
 <div id="hallValue" class="kpi">Cargando...</div>
-<p class="meta">Meta recomendada: ≥ 95%</p>
+<p class="meta">Meta recomendada ≥ 95%</p>
 </div>
 
 </div>
 
 <script>
 
-async function cargarExcel() {
+async function cargarDatos() {
 
-    const url = "https://1drv.ms/x/c/7bed2975415899d6/IQBct-WV6dFYQpgCArPaNiBgAWJVyGJC5CyKzHx-zAlEk6Q?e=UQZciD&format=csv";
+    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
 
     const response = await fetch(url);
     const texto = await response.text();
@@ -107,7 +108,7 @@ async function cargarExcel() {
         const columnas = fila.split(",");
 
         totalHoras += parseFloat(columnas[1]) || 0;
-        totalAccidentes += parseFloat(columnes[2]) || 0;
+        totalAccidentes += parseFloat(columnas[2]) || 0;
         totalDias += parseFloat(columnas[3]) || 0;
         totalInspProg += parseFloat(columnas[4]) || 0;
         totalInspEjec += parseFloat(columnas[5]) || 0;
@@ -126,7 +127,7 @@ async function cargarExcel() {
     document.getElementById("hallValue").innerText = cierreHallazgos.toFixed(1) + "%";
 }
 
-cargarExcel();
+cargarDatos();
 
 </script>
 
