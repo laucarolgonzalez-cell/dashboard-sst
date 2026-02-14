@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Ausentismo SST</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -20,9 +22,6 @@ header {
 }
 
 .container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
     padding: 20px;
 }
 
@@ -31,17 +30,12 @@ header {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
-.kpi {
-    font-size: 32px;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-.meta {
-    font-size: 13px;
-    color: #555;
+select {
+    padding: 8px;
+    font-size: 14px;
 }
 </style>
 </head>
@@ -56,27 +50,19 @@ header {
 <div class="container">
 
 <div class="card">
-<h3>Total Casos</h3>
-<div id="totalCasos" class="kpi">Cargando...</div>
-<p class="meta">Número total de incapacidades registradas</p>
+<h3>Seleccionar Enfermedad</h3>
+<select id="enfermedadSelect"></select>
+<p id="porcentajeEnfermedad"></p>
 </div>
 
 <div class="card">
-<h3>Total Días Perdidos</h3>
-<div id="totalDias" class="kpi">Cargando...</div>
-<p class="meta">Suma de días de incapacidad</p>
+<h3>Distribución por Origen</h3>
+<canvas id="origenChart"></canvas>
 </div>
 
 <div class="card">
-<h3>Promedio Días por Caso</h3>
-<div id="promedioDias" class="kpi">Cargando...</div>
-<p class="meta">Días promedio por incapacidad</p>
-</div>
-
-<div class="card">
-<h3>% Origen Laboral</h3>
-<div id="origenLaboral" class="kpi">Cargando...</div>
-<p class="meta">Porcentaje de casos de origen laboral</p>
+<h3>Días Perdidos por Enfermedad</h3>
+<canvas id="enfermedadChart"></canvas>
 </div>
 
 </div>
@@ -92,29 +78,70 @@ async function cargarDatos() {
 
     const filas = texto.trim().split("\n").slice(1);
 
+    let enfermedades = {};
+    let origenes = {};
     let totalCasos = filas.length;
-    let totalDias = 0;
-    let casosLaborales = 0;
 
     filas.forEach(fila => {
         const columnas = fila.split(",");
 
-        // Columna 8 = DIAS INCAPACIDAD
-        totalDias += parseFloat(columnas[7]) || 0;
+        const enfermedad = columnas[6];
+        const dias = parseFloat(columnas[7]) || 0;
+        const origen = columnas[10];
 
-        // Columna 11 = ORIGEN
-        if (columnas[10] && columnas[10].toLowerCase().includes("laboral")) {
-            casosLaborales++;
+        // Agrupar enfermedades
+        if (!enfermedades[enfermedad]) {
+            enfermedades[enfermedad] = { casos: 0, dias: 0 };
+        }
+        enfermedades[enfermedad].casos++;
+        enfermedades[enfermedad].dias += dias;
+
+        // Agrupar origen
+        if (!origenes[origen]) {
+            origenes[origen] = 0;
+        }
+        origenes[origen]++;
+    });
+
+    // Dropdown
+    const select = document.getElementById("enfermedadSelect");
+    for (let enf in enfermedades) {
+        let option = document.createElement("option");
+        option.value = enf;
+        option.text = enf;
+        select.appendChild(option);
+    }
+
+    select.addEventListener("change", function() {
+        const seleccion = this.value;
+        const porcentaje = (enfermedades[seleccion].casos / totalCasos) * 100;
+        document.getElementById("porcentajeEnfermedad").innerText =
+            "Representa el " + porcentaje.toFixed(1) + "% del total de casos.";
+    });
+
+    // Gráfico Origen
+    new Chart(document.getElementById("origenChart"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(origenes),
+            datasets: [{
+                data: Object.values(origenes)
+            }]
         }
     });
 
-    const promedioDias = totalDias / totalCasos;
-    const porcentajeLaboral = (casosLaborales / totalCasos) * 100;
+    // Gráfico Enfermedad
+    new Chart(document.getElementById("enfermedadChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(enfermedades),
+            datasets: [{
+                label: "Días Perdidos",
+                data: Object.values(enfermedades).map(e => e.dias)
+            }]
+        }
+    });
 
-    document.getElementById("totalCasos").innerText = totalCasos;
-    document.getElementById("totalDias").innerText = totalDias;
-    document.getElementById("promedioDias").innerText = promedioDias.toFixed(1);
-    document.getElementById("origenLaboral").innerText = porcentajeLaboral.toFixed(1) + "%";
 }
 
 cargarDatos();
