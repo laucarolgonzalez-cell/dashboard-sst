@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Ausentismo SST</title>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -29,13 +28,12 @@ header {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
 
 select {
-    padding: 8px;
-    font-size: 14px;
+    margin: 5px;
+    padding: 6px;
 }
 </style>
 </head>
@@ -43,31 +41,30 @@ select {
 <body>
 
 <header>
-<h1>Dashboard Ausentismo 2025</h1>
-<p>Análisis automático desde Google Sheets</p>
+<h1>Dashboard Interactivo Ausentismo 2025</h1>
 </header>
 
 <div class="container">
 
 <div class="card">
-<h3>Seleccionar Enfermedad</h3>
-<select id="enfermedadSelect"></select>
-<p id="porcentajeEnfermedad"></p>
+<h3>Filtros</h3>
+<select id="nombreSelect"><option value="Todos">Todos los empleados</option></select>
+<select id="codigoSelect"><option value="Todos">Todos los códigos</option></select>
+<select id="enfermedadSelect"><option value="Todos">Todas las enfermedades</option></select>
+<select id="origenSelect"><option value="Todos">Todos los orígenes</option></select>
 </div>
 
 <div class="card">
-<h3>Distribución por Origen</h3>
-<canvas id="origenChart"></canvas>
-</div>
-
-<div class="card">
-<h3>Días Perdidos por Enfermedad</h3>
-<canvas id="enfermedadChart"></canvas>
+<h3>Días de Incapacidad por Mes</h3>
+<canvas id="mesChart"></canvas>
 </div>
 
 </div>
 
 <script>
+
+let datosGlobales = [];
+let chart;
 
 async function cargarDatos() {
 
@@ -78,70 +75,83 @@ async function cargarDatos() {
 
     const filas = texto.trim().split("\n").slice(1);
 
-    let enfermedades = {};
-    let origenes = {};
-    let totalCasos = filas.length;
-
     filas.forEach(fila => {
-        const columnas = fila.split(",");
-
-        const enfermedad = columnas[6];
-        const dias = parseFloat(columnas[7]) || 0;
-        const origen = columnas[10];
-
-        // Agrupar enfermedades
-        if (!enfermedades[enfermedad]) {
-            enfermedades[enfermedad] = { casos: 0, dias: 0 };
-        }
-        enfermedades[enfermedad].casos++;
-        enfermedades[enfermedad].dias += dias;
-
-        // Agrupar origen
-        if (!origenes[origen]) {
-            origenes[origen] = 0;
-        }
-        origenes[origen]++;
+        const c = fila.split(",");
+        datosGlobales.push({
+            mes: c[1],
+            nombre: c[3],
+            codigo: c[5],
+            enfermedad: c[6],
+            dias: parseFloat(c[7]) || 0,
+            origen: c[10]
+        });
     });
 
-    // Dropdown
-    const select = document.getElementById("enfermedadSelect");
-    for (let enf in enfermedades) {
-        let option = document.createElement("option");
-        option.value = enf;
-        option.text = enf;
-        select.appendChild(option);
-    }
+    llenarDropdowns();
+    actualizarGrafica();
+}
 
-    select.addEventListener("change", function() {
-        const seleccion = this.value;
-        const porcentaje = (enfermedades[seleccion].casos / totalCasos) * 100;
-        document.getElementById("porcentajeEnfermedad").innerText =
-            "Representa el " + porcentaje.toFixed(1) + "% del total de casos.";
+function llenarDropdowns() {
+
+    const nombres = [...new Set(datosGlobales.map(d => d.nombre))];
+    const codigos = [...new Set(datosGlobales.map(d => d.codigo))];
+    const enfermedades = [...new Set(datosGlobales.map(d => d.enfermedad))];
+    const origenes = [...new Set(datosGlobales.map(d => d.origen))];
+
+    const selects = [
+        { id: "nombreSelect", valores: nombres },
+        { id: "codigoSelect", valores: codigos },
+        { id: "enfermedadSelect", valores: enfermedades },
+        { id: "origenSelect", valores: origenes }
+    ];
+
+    selects.forEach(s => {
+        const select = document.getElementById(s.id);
+        s.valores.forEach(v => {
+            let option = document.createElement("option");
+            option.value = v;
+            option.text = v;
+            select.appendChild(option);
+        });
+        select.addEventListener("change", actualizarGrafica);
+    });
+}
+
+function actualizarGrafica() {
+
+    const nombreFiltro = document.getElementById("nombreSelect").value;
+    const codigoFiltro = document.getElementById("codigoSelect").value;
+    const enfermedadFiltro = document.getElementById("enfermedadSelect").value;
+    const origenFiltro = document.getElementById("origenSelect").value;
+
+    let datosFiltrados = datosGlobales.filter(d =>
+        (nombreFiltro === "Todos" || d.nombre === nombreFiltro) &&
+        (codigoFiltro === "Todos" || d.codigo === codigoFiltro) &&
+        (enfermedadFiltro === "Todos" || d.enfermedad === enfermedadFiltro) &&
+        (origenFiltro === "Todos" || d.origen === origenFiltro)
+    );
+
+    let meses = {};
+    datosFiltrados.forEach(d => {
+        if (!meses[d.mes]) meses[d.mes] = 0;
+        meses[d.mes] += d.dias;
     });
 
-    // Gráfico Origen
-    new Chart(document.getElementById("origenChart"), {
-        type: "pie",
-        data: {
-            labels: Object.keys(origenes),
-            datasets: [{
-                data: Object.values(origenes)
-            }]
-        }
-    });
+    const labels = Object.keys(meses);
+    const data = Object.values(meses);
 
-    // Gráfico Enfermedad
-    new Chart(document.getElementById("enfermedadChart"), {
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("mesChart"), {
         type: "bar",
         data: {
-            labels: Object.keys(enfermedades),
+            labels: labels,
             datasets: [{
-                label: "Días Perdidos",
-                data: Object.values(enfermedades).map(e => e.dias)
+                label: "Días de Incapacidad",
+                data: data
             }]
         }
     });
-
 }
 
 cargarDatos();
