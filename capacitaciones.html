@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capacitaciones SST</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Módulo Capacitaciones</title>
 
 <style>
-body { font-family: Arial; margin:0; background:#f3efe9; }
+body {
+    font-family: Arial;
+    margin:0;
+    background:#f3efe9;
+}
 
 header {
     display:flex;
@@ -19,7 +21,9 @@ header {
     color:white;
 }
 
-.container { padding:30px; }
+.container {
+    padding:30px;
+}
 
 .card {
     background:white;
@@ -27,6 +31,10 @@ header {
     border-radius:12px;
     margin-bottom:25px;
     box-shadow:0 6px 18px rgba(90,62,43,0.15);
+}
+
+h2 {
+    color:#5a3e2b;
 }
 
 button {
@@ -40,7 +48,7 @@ button {
 }
 
 button:hover {
-    background:#5a3e2b;
+    background:#4b3425;
 }
 </style>
 </head>
@@ -48,69 +56,36 @@ button:hover {
 <body>
 
 <header>
-<h1 style="margin:0;">Módulo Capacitaciones</h1>
+<div>
+<h1 style="margin:0;">Módulo Capacitaciones SST</h1>
+<p style="margin:0;">Repositorio de Evidencias</p>
+</div>
+
 <button onclick="location.href='index.html'">⬅ Volver</button>
 </header>
 
 <div class="container">
 
-<!-- ACCESO A CARPETA DRIVE -->
 <div class="card">
-<h3>Repositorio de Evidencias</h3>
-<p>Aquí se encuentran las listas de asistencia, soportes y registros de capacitación.</p>
-
-<button onclick="window.open('https://drive.google.com/drive/folders/15XK1tdEh4cmn5UFfgQZt_VFPV4VRaHtx?usp=sharing', '_blank')">
-📂 Abrir Carpeta de Evidencias
-</button>
+<h2>Repositorio Documental</h2>
+<p>
+En esta sección se encuentran los soportes de capacitación: listas de asistencia, registros fotográficos, evaluaciones y demás evidencias del proceso formativo.
+</p>
 </div>
 
-<!-- GRAFICO -->
 <div class="card">
-<h3>Total Participaciones por Mes</h3>
-<canvas id="chartCap"></canvas>
-</div>
+
+<h2>Carpeta de Evidencias</h2>
+
+<iframe
+src="https://drive.google.com/embeddedfolderview?id=15XK1tdEh4cmn5UFfgQZt_VFPV4VRaHtx#list"
+style="width:100%; height:600px; border:0;">
+</iframe>
 
 </div>
 
-<script>
+</div>
 
-let chart;
-
-const url = "PEGA_AQUI_TU_LINK_CSV_CAPACITACIONES";
-
-async function cargarDatos() {
-    const response = await fetch(url);
-    const texto = await response.text();
-    const filas = texto.trim().split("\n").slice(1);
-
-    let agrupado = {};
-
-    filas.forEach(fila => {
-        const c = fila.split(",");
-        let mes = c[1];
-        if (!agrupado[mes]) agrupado[mes] = 0;
-        agrupado[mes]++;
-    });
-
-    const labels = Object.keys(agrupado);
-    const valores = Object.values(agrupado);
-
-    chart = new Chart(document.getElementById("chartCap"), {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Participaciones",
-                data: valores,
-                backgroundColor: "#6f4e37"
-            }]
-        }
-    });
-}
-
-cargarDatos();
-
-</script>
 </body>
 </html>
 
