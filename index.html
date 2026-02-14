@@ -3,16 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Ejecutivo SST</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<title>Panel Estratégico SST</title>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background-color: #f3efe9;
+    font-family: Arial;
+    margin:0;
+    background:#f3efe9;
 }
 
 header {
@@ -24,27 +21,27 @@ header {
     color:white;
 }
 
-h1 {
-    margin:0;
-}
-
 .container {
-    padding:30px;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    padding:80px;
 }
 
 .card {
-    background:#ffffff;
-    padding:25px;
-    border-radius:12px;
-    margin-bottom:25px;
-    box-shadow: 0 6px 18px rgba(90,62,43,0.15);
+    background:white;
+    padding:50px;
+    border-radius:15px;
+    width:260px;
+    text-align:center;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+    transition:0.3s;
 }
 
-select {
-    margin:5px;
-    padding:8px;
-    border-radius:6px;
-    border:1px solid #cbb8a8;
+.card:hover {
+    transform:translateY(-8px);
+    background:#e8ddd2;
 }
 </style>
 </head>
@@ -53,176 +50,27 @@ select {
 
 <header>
 <div>
-<h1>Dashboard Varietale Ausentismo 2025</h1>
-<p style="margin:0;">Análisis Estratégico SST</p>
+<h1 style="margin:0;">Panel Corporativo SST</h1>
+<p style="margin:0;">Gestión Integral</p>
 </div>
 
-<div>
 <img src="https://images.ctfassets.net/gxc4u4llwrnk/7HoXxaRKvrtvw1UHHUXMkw/5faa655552518d9768700c1d480f2384/varietale-logo-ok.png?w=150&h=150&q=90&fm=png&bg=transparent"
-     alt="Logo Empresa"
-     style="height:70px; background:white; padding:6px; border-radius:8px;">
-</div>
+     style="height:60px; background:white; padding:5px; border-radius:8px;">
 </header>
 
 <div class="container">
 
-<div class="card">
-<h3>Filtros</h3>
-<select id="mesSelect"></select>
-<select id="nombreSelect"></select>
-<select id="codigoSelect"></select>
-<select id="enfermedadSelect"></select>
-<select id="origenSelect"></select>
+<div class="card" onclick="location.href='ausentismo.html'">
+<h2>📊 Ausentismo</h2>
+<p>Análisis epidemiológico</p>
 </div>
 
-<div class="card">
-<h3>Distribución de Días de Incapacidad</h3>
-<canvas id="chart"></canvas>
+<div class="card" onclick="location.href='capacitaciones.html'">
+<h2>🎓 Capacitaciones</h2>
+<p>Gestión de formación</p>
 </div>
 
 </div>
-
-<script>
-
-let datos = [];
-let chart;
-
-const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
-
-async function cargarDatos() {
-
-    const response = await fetch(url);
-    const texto = await response.text();
-    const filas = texto.trim().split("\n").slice(1);
-
-    filas.forEach(fila => {
-        const c = fila.split(",");
-        datos.push({
-            mes: c[1],
-            nombre: c[3],
-            codigo: c[5],
-            enfermedad: c[6],
-            dias: parseFloat(c[7]) || 0,
-            origen: c[10]
-        });
-    });
-
-    actualizarTodo();
-}
-
-function actualizarTodo() {
-    actualizarDropdowns();
-    actualizarGrafica();
-}
-
-function actualizarDropdowns() {
-
-    const filtros = obtenerFiltros();
-    const filtrados = aplicarFiltros(filtros);
-
-    llenarSelect("mesSelect", obtenerUnicos(filtrados, "mes"));
-    llenarSelect("nombreSelect", obtenerUnicos(filtrados, "nombre"));
-    llenarSelect("codigoSelect", obtenerUnicos(filtrados, "codigo"));
-    llenarSelect("enfermedadSelect", obtenerUnicos(filtrados, "enfermedad"));
-    llenarSelect("origenSelect", obtenerUnicos(filtrados, "origen"));
-}
-
-function obtenerFiltros() {
-    return {
-        mes: document.getElementById("mesSelect").value || "Todos",
-        nombre: document.getElementById("nombreSelect").value || "Todos",
-        codigo: document.getElementById("codigoSelect").value || "Todos",
-        enfermedad: document.getElementById("enfermedadSelect").value || "Todos",
-        origen: document.getElementById("origenSelect").value || "Todos"
-    };
-}
-
-function aplicarFiltros(filtros) {
-    return datos.filter(d =>
-        (filtros.mes === "Todos" || d.mes === filtros.mes) &&
-        (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
-        (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
-        (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
-        (filtros.origen === "Todos" || d.origen === filtros.origen)
-    );
-}
-
-function obtenerUnicos(array, campo) {
-    return [...new Set(array.map(d => d[campo]))];
-}
-
-function llenarSelect(id, valores) {
-    const select = document.getElementById(id);
-    const valorActual = select.value;
-
-    select.innerHTML = '<option value="Todos">Todos</option>';
-
-    valores.forEach(v => {
-        let option = document.createElement("option");
-        option.value = v;
-        option.text = v;
-        select.appendChild(option);
-    });
-
-    if (valores.includes(valorActual)) {
-        select.value = valorActual;
-    }
-
-    select.onchange = actualizarTodo;
-}
-
-function actualizarGrafica() {
-
-    const filtros = obtenerFiltros();
-    const filtrados = aplicarFiltros(filtros);
-
-    let agrupado = {};
-
-    filtrados.forEach(d => {
-        if (!agrupado[d.mes]) agrupado[d.mes] = 0;
-        agrupado[d.mes] += d.dias;
-    });
-
-    const labels = Object.keys(agrupado);
-    const valores = Object.values(agrupado);
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(document.getElementById("chart"), {
-        type: "pie",
-        data: {
-            labels: labels,
-            datasets: [{
-                data: valores,
-                backgroundColor: [
-                    "#6f4e37",
-                    "#8b5e3c",
-                    "#a97450",
-                    "#c19a6b",
-                    "#d2b48c",
-                    "#5c4033"
-                ]
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    color: "#ffffff",
-                    formatter: function(value, context) {
-                        let total = context.chart._metasets[0].total;
-                        let percentage = (value / total * 100).toFixed(1) + "%";
-                        return value + " días\n" + percentage;
-                    }
-                }
-            }
-        },
-        plugins: [ChartDataLabels]
-    });
-}
-
-cargarDatos();
-
-</script>
 
 </body>
 </html>
