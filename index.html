@@ -3,22 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Ausentismo SST</title>
+<title>Dashboard Ejecutivo SST</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
 <style>
-body { font-family: Arial; margin:0; background:#f4f6f9; }
-header { background:#163a63; color:white; padding:25px; text-align:center; }
-.container { padding:20px; }
-.card { background:white; padding:20px; border-radius:10px; margin-bottom:20px; }
-select { margin:5px; padding:6px; }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f3efe9;
+}
+
+header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+    background:#5a3e2b;
+    color:white;
+}
+
+h1 {
+    margin:0;
+}
+
+.container {
+    padding:30px;
+}
+
+.card {
+    background:#ffffff;
+    padding:25px;
+    border-radius:12px;
+    margin-bottom:25px;
+    box-shadow: 0 6px 18px rgba(90,62,43,0.15);
+}
+
+select {
+    margin:5px;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #cbb8a8;
+}
 </style>
 </head>
 
 <body>
 
 <header>
+<div>
 <h1>Dashboard Varietale Ausentismo 2025</h1>
+<p style="margin:0;">Análisis Estratégico SST</p>
+</div>
+
+<div>
+<img src="https://images.ctfassets.net/gxc4u4llwrnk/7HoXxaRKvrtvw1UHHUXMkw/5faa655552518d9768700c1d480f2384/varietale-logo-ok.png?w=150&h=150&q=90&fm=png&bg=transparent"
+     alt="Logo Empresa"
+     style="height:70px; background:white; padding:6px; border-radius:8px;">
+</div>
 </header>
 
 <div class="container">
@@ -33,7 +76,7 @@ select { margin:5px; padding:6px; }
 </div>
 
 <div class="card">
-<h3>Días de Incapacidad por Mes</h3>
+<h3>Distribución de Días de Incapacidad</h3>
 <canvas id="chart"></canvas>
 </div>
 
@@ -75,7 +118,6 @@ function actualizarTodo() {
 function actualizarDropdowns() {
 
     const filtros = obtenerFiltros();
-
     const filtrados = aplicarFiltros(filtros);
 
     llenarSelect("mesSelect", obtenerUnicos(filtrados, "mes"));
@@ -147,14 +189,34 @@ function actualizarGrafica() {
     if (chart) chart.destroy();
 
     chart = new Chart(document.getElementById("chart"), {
-        type: "bar",
+        type: "pie",
         data: {
             labels: labels,
             datasets: [{
-                label: "Días Incapacidad",
-                data: valores
+                data: valores,
+                backgroundColor: [
+                    "#6f4e37",
+                    "#8b5e3c",
+                    "#a97450",
+                    "#c19a6b",
+                    "#d2b48c",
+                    "#5c4033"
+                ]
             }]
-        }
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    color: "#ffffff",
+                    formatter: function(value, context) {
+                        let total = context.chart._metasets[0].total;
+                        let percentage = (value / total * 100).toFixed(1) + "%";
+                        return value + " días\n" + percentage;
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -164,4 +226,3 @@ cargarDatos();
 
 </body>
 </html>
-
