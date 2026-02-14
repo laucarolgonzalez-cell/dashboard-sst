@@ -18,22 +18,22 @@ select { margin:5px; padding:6px; }
 <body>
 
 <header>
-<h1>Varietale Ausentismo 2025</h1>
+<h1>Dashboard Varietale Ausentismo 2025</h1>
 </header>
 
 <div class="container">
 
 <div class="card">
 <h3>Filtros</h3>
-<select id="mesSelect"><option value="Todos">Todos los meses</option></select>
-<select id="nombreSelect"><option value="Todos">Todos los empleados</option></select>
-<select id="codigoSelect"><option value="Todos">Todos los códigos</option></select>
-<select id="enfermedadSelect"><option value="Todos">Todas las enfermedades</option></select>
-<select id="origenSelect"><option value="Todos">Todos los orígenes</option></select>
+<select id="mesSelect"></select>
+<select id="nombreSelect"></select>
+<select id="codigoSelect"></select>
+<select id="enfermedadSelect"></select>
+<select id="origenSelect"></select>
 </div>
 
 <div class="card">
-<h3>Días de Incapacidad</h3>
+<h3>Días de Incapacidad por Mes</h3>
 <canvas id="chart"></canvas>
 </div>
 
@@ -44,9 +44,9 @@ select { margin:5px; padding:6px; }
 let datos = [];
 let chart;
 
-async function cargarDatos() {
+const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
 
-    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
+async function cargarDatos() {
 
     const response = await fetch(url);
     const texto = await response.text();
@@ -54,7 +54,6 @@ async function cargarDatos() {
 
     filas.forEach(fila => {
         const c = fila.split(",");
-
         datos.push({
             mes: c[1],
             nombre: c[3],
@@ -65,45 +64,76 @@ async function cargarDatos() {
         });
     });
 
-    llenarDropdown("mesSelect", [...new Set(datos.map(d => d.mes))]);
-    llenarDropdown("nombreSelect", [...new Set(datos.map(d => d.nombre))]);
-    llenarDropdown("codigoSelect", [...new Set(datos.map(d => d.codigo))]);
-    llenarDropdown("enfermedadSelect", [...new Set(datos.map(d => d.enfermedad))]);
-    llenarDropdown("origenSelect", [...new Set(datos.map(d => d.origen))]);
+    actualizarTodo();
+}
 
+function actualizarTodo() {
+    actualizarDropdowns();
     actualizarGrafica();
 }
 
-function llenarDropdown(id, valores) {
-    const select = document.getElementById(id);
-    valores.forEach(v => {
-        let option = document.createElement("option");
-        option.value = v;
-        option.text = v;
-        select.appendChild(option);
-    });
-    select.addEventListener("change", actualizarGrafica);
+function actualizarDropdowns() {
+
+    const filtros = obtenerFiltros();
+
+    const filtrados = aplicarFiltros(filtros);
+
+    llenarSelect("mesSelect", obtenerUnicos(filtrados, "mes"));
+    llenarSelect("nombreSelect", obtenerUnicos(filtrados, "nombre"));
+    llenarSelect("codigoSelect", obtenerUnicos(filtrados, "codigo"));
+    llenarSelect("enfermedadSelect", obtenerUnicos(filtrados, "enfermedad"));
+    llenarSelect("origenSelect", obtenerUnicos(filtrados, "origen"));
 }
 
-function actualizarGrafica() {
-
-    const filtros = {
-        mes: document.getElementById("mesSelect").value,
-        nombre: document.getElementById("nombreSelect").value,
-        codigo: document.getElementById("codigoSelect").value,
-        enfermedad: document.getElementById("enfermedadSelect").value,
-        origen: document.getElementById("origenSelect").value
+function obtenerFiltros() {
+    return {
+        mes: document.getElementById("mesSelect").value || "Todos",
+        nombre: document.getElementById("nombreSelect").value || "Todos",
+        codigo: document.getElementById("codigoSelect").value || "Todos",
+        enfermedad: document.getElementById("enfermedadSelect").value || "Todos",
+        origen: document.getElementById("origenSelect").value || "Todos"
     };
+}
 
-    let filtrados = datos.filter(d =>
+function aplicarFiltros(filtros) {
+    return datos.filter(d =>
         (filtros.mes === "Todos" || d.mes === filtros.mes) &&
         (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
         (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
         (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
         (filtros.origen === "Todos" || d.origen === filtros.origen)
     );
+}
 
-    // Si no se filtra mes → mostrar por mes
+function obtenerUnicos(array, campo) {
+    return [...new Set(array.map(d => d[campo]))];
+}
+
+function llenarSelect(id, valores) {
+    const select = document.getElementById(id);
+    const valorActual = select.value;
+
+    select.innerHTML = '<option value="Todos">Todos</option>';
+
+    valores.forEach(v => {
+        let option = document.createElement("option");
+        option.value = v;
+        option.text = v;
+        select.appendChild(option);
+    });
+
+    if (valores.includes(valorActual)) {
+        select.value = valorActual;
+    }
+
+    select.onchange = actualizarTodo;
+}
+
+function actualizarGrafica() {
+
+    const filtros = obtenerFiltros();
+    const filtrados = aplicarFiltros(filtros);
+
     let agrupado = {};
 
     filtrados.forEach(d => {
@@ -134,3 +164,4 @@ cargarDatos();
 
 </body>
 </html>
+
