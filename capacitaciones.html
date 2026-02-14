@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacitaciones SST</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { font-family: Arial; margin:0; background:#f3efe9; }
+header { display:flex; justify-content:space-between; align-items:center; padding:20px 40px; background:#5a3e2b; color:white; }
+.container { padding:30px; }
+.card { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 6px 18px rgba(90,62,43,0.15); }
+</style>
+</head>
+
+<body>
+
+<header>
+<h1 style="margin:0;">Módulo Capacitaciones</h1>
+<button onclick="location.href='index.html'">⬅ Volver</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Total Participaciones por Mes</h3>
+<canvas id="chartCap"></canvas>
+</div>
+
+</div>
+
+<script>
+
+let chart;
+
+const url = "PEGA_AQUI_TU_LINK_CSV_CAPACITACIONES";
+
+async function cargarDatos() {
+    const response = await fetch(url);
+    const texto = await response.text();
+    const filas = texto.trim().split("\n").slice(1);
+
+    let agrupado = {};
+
+    filas.forEach(fila => {
+        const c = fila.split(",");
+        let mes = c[1];
+        if (!agrupado[mes]) agrupado[mes] = 0;
+        agrupado[mes]++;
+    });
+
+    const labels = Object.keys(agrupado);
+    const valores = Object.values(agrupado);
+
+    chart = new Chart(document.getElementById("chartCap"), {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Participaciones",
+                data: valores,
+                backgroundColor: "#6f4e37"
+            }]
+        }
+    });
+}
+
+cargarDatos();
+
+</script>
+</body>
+</html>
