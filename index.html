@@ -16,7 +16,7 @@ header {
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:20px 40px;
+    padding:20px 30px;
     background:#5a3e2b;
     color:white;
 }
@@ -25,7 +25,7 @@ header {
     display:flex;
     justify-content:center;
     gap:40px;
-    padding:80px;
+    padding:60px;
 }
 
 .card {
@@ -42,6 +42,28 @@ header {
 .card:hover {
     transform:translateY(-8px);
     background:#e8ddd2;
+}
+
+/* RESPONSIVE CELULAR */
+@media (max-width: 768px) {
+
+    header {
+        flex-direction:column;
+        text-align:center;
+        gap:10px;
+    }
+
+    .container {
+        flex-direction:column;
+        align-items:center;
+        padding:30px;
+        gap:25px;
+    }
+
+    .card {
+        width:90%;
+        padding:40px 20px;
+    }
 }
 </style>
 </head>
@@ -61,16 +83,17 @@ header {
 <div class="container">
 
 <div class="card" onclick="location.href='ausentismo.html'">
-<h2>📊 Ausentismo</h2>
+<h2>📊 AUSENTISMO</h2>
 <p>Análisis epidemiológico</p>
 </div>
 
 <div class="card" onclick="location.href='capacitaciones.html'">
-<h2>🎓 Capacitaciones</h2>
-<p>Gestión de formación</p>
+<h2>📂 DOCUMENTOS</h2>
+<p>Repositorio SG-SST</p>
 </div>
 
 </div>
 
 </body>
 </html>
+
