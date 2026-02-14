@@ -10,41 +10,11 @@
 
 <style>
 body { font-family: Arial; margin:0; background:#f3efe9; }
-
-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:20px 40px;
-    background:#5a3e2b;
-    color:white;
-}
-
+header { display:flex; justify-content:space-between; align-items:center; padding:20px 40px; background:#5a3e2b; color:white; }
 .container { padding:30px; }
-
-.card {
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    margin-bottom:25px;
-    box-shadow:0 6px 18px rgba(90,62,43,0.15);
-}
-
-select {
-    margin:5px;
-    padding:8px;
-    border-radius:6px;
-    border:1px solid #cbb8a8;
-}
-
-button {
-    background:#6f4e37;
-    color:white;
-    border:none;
-    padding:8px 15px;
-    border-radius:6px;
-    cursor:pointer;
-}
+.card { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 6px 18px rgba(90,62,43,0.15); }
+select { margin:5px; padding:8px; border-radius:6px; border:1px solid #cbb8a8; }
+button { background:#6f4e37; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; }
 </style>
 </head>
 
@@ -84,6 +54,7 @@ let chart;
 const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH0v565bjWRWmTAAeR0XtaeQCw0BSVdmK_lAKlJz70SxXq44COlx5vIRlCcvXwXg/pub?gid=1737014280&single=true&output=csv";
 
 async function cargarDatos() {
+
     const response = await fetch(url);
     const texto = await response.text();
     const filas = texto.trim().split("\n").slice(1);
@@ -100,28 +71,94 @@ async function cargarDatos() {
         });
     });
 
-    actualizarTodo();
-}
-
-function actualizarTodo() {
-    actualizarDropdowns();
+    llenarDropdownsIniciales();
     actualizarGrafica();
 }
 
-function actualizarDropdowns() {
-    const filtros = obtenerFiltros();
-    const filtrados = aplicarFiltros(filtros);
+function llenarDropdownsIniciales() {
 
-    llenarSelect("mesSelect", obtenerUnicos(filtrados, "mes"));
-    llenarSelect("nombreSelect", obtenerUnicos(filtrados, "nombre"));
-    llenarSelect("codigoSelect", obtenerUnicos(filtrados, "codigo"));
-    llenarSelect("enfermedadSelect", obtenerUnicos(filtrados, "enfermedad"));
-    llenarSelect("origenSelect", obtenerUnicos(filtrados, "origen"));
+    llenarSelect("mesSelect", obtenerUnicos(datos, "mes"));
+    llenarSelect("nombreSelect", obtenerUnicos(datos, "nombre"));
+    llenarSelect("codigoSelect", obtenerUnicos(datos, "codigo"));
+    llenarSelect("enfermedadSelect", obtenerUnicos(datos, "enfermedad"));
+    llenarSelect("origenSelect", obtenerUnicos(datos, "origen"));
 }
 
-function obtenerFiltros() {
-    return {
-        mes: document.getElementById("mesSelect").value || "Todos",
-        nombre: document.getElementById("nombreSelect").value || "Todos",
-        codigo: document.getElementById("codigoSelect").value || "Todos",
-        enfermedad: document.getElementById("enfermeda
+function llenarSelect(id, valores) {
+    const select = document.getElementById(id);
+
+    select.innerHTML = '<option value="Todos">Todos</option>';
+
+    valores.forEach(v => {
+        let option = document.createElement("option");
+        option.value = v;
+        option.text = v;
+        select.appendChild(option);
+    });
+
+    select.onchange = actualizarGrafica;
+}
+
+function obtenerUnicos(array, campo) {
+    return [...new Set(array.map(d => d[campo]))];
+}
+
+function actualizarGrafica() {
+
+    const filtros = {
+        mes: document.getElementById("mesSelect").value,
+        nombre: document.getElementById("nombreSelect").value,
+        codigo: document.getElementById("codigoSelect").value,
+        enfermedad: document.getElementById("enfermedadSelect").value,
+        origen: document.getElementById("origenSelect").value
+    };
+
+    let filtrados = datos.filter(d =>
+        (filtros.mes === "Todos" || d.mes === filtros.mes) &&
+        (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
+        (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
+        (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
+        (filtros.origen === "Todos" || d.origen === filtros.origen)
+    );
+
+    let agrupado = {};
+    filtrados.forEach(d => {
+        if (!agrupado[d.mes]) agrupado[d.mes] = 0;
+        agrupado[d.mes] += d.dias;
+    });
+
+    const labels = Object.keys(agrupado);
+    const valores = Object.values(agrupado);
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("chart"), {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: ["#6f4e37","#8b5e3c","#a97450","#c19a6b","#d2b48c","#5c4033"]
+            }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    color: "#fff",
+                    formatter: function(value, context) {
+                        const total = context.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                        const pct = ((value/total)*100).toFixed(1);
+                        return value + " días\n(" + pct + "%)";
+                    }
+                }
+            }
+        },
+        plugins:[ChartDataLabels]
+    });
+}
+
+cargarDatos();
+
+</script>
+</body>
+</html>
