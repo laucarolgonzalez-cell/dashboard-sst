@@ -7,34 +7,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background-color: #f4f6f9;
-}
-
-header {
-    background-color: #163a63;
-    color: white;
-    padding: 25px;
-    text-align: center;
-}
-
-.container {
-    padding: 20px;
-}
-
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-select {
-    margin: 5px;
-    padding: 6px;
-}
+body { font-family: Arial; margin:0; background:#f4f6f9; }
+header { background:#163a63; color:white; padding:25px; text-align:center; }
+.container { padding:20px; }
+.card { background:white; padding:20px; border-radius:10px; margin-bottom:20px; }
+select { margin:5px; padding:6px; }
 </style>
 </head>
 
@@ -48,6 +25,7 @@ select {
 
 <div class="card">
 <h3>Filtros</h3>
+<select id="mesSelect"><option value="Todos">Todos los meses</option></select>
 <select id="nombreSelect"><option value="Todos">Todos los empleados</option></select>
 <select id="codigoSelect"><option value="Todos">Todos los códigos</option></select>
 <select id="enfermedadSelect"><option value="Todos">Todas las enfermedades</option></select>
@@ -55,15 +33,15 @@ select {
 </div>
 
 <div class="card">
-<h3>Días de Incapacidad por Mes</h3>
-<canvas id="mesChart"></canvas>
+<h3>Días de Incapacidad</h3>
+<canvas id="chart"></canvas>
 </div>
 
 </div>
 
 <script>
 
-let datosGlobales = [];
+let datos = [];
 let chart;
 
 async function cargarDatos() {
@@ -72,12 +50,12 @@ async function cargarDatos() {
 
     const response = await fetch(url);
     const texto = await response.text();
-
     const filas = texto.trim().split("\n").slice(1);
 
     filas.forEach(fila => {
         const c = fila.split(",");
-        datosGlobales.push({
+
+        datos.push({
             mes: c[1],
             nombre: c[3],
             codigo: c[5],
@@ -87,68 +65,64 @@ async function cargarDatos() {
         });
     });
 
-    llenarDropdowns();
+    llenarDropdown("mesSelect", [...new Set(datos.map(d => d.mes))]);
+    llenarDropdown("nombreSelect", [...new Set(datos.map(d => d.nombre))]);
+    llenarDropdown("codigoSelect", [...new Set(datos.map(d => d.codigo))]);
+    llenarDropdown("enfermedadSelect", [...new Set(datos.map(d => d.enfermedad))]);
+    llenarDropdown("origenSelect", [...new Set(datos.map(d => d.origen))]);
+
     actualizarGrafica();
 }
 
-function llenarDropdowns() {
-
-    const nombres = [...new Set(datosGlobales.map(d => d.nombre))];
-    const codigos = [...new Set(datosGlobales.map(d => d.codigo))];
-    const enfermedades = [...new Set(datosGlobales.map(d => d.enfermedad))];
-    const origenes = [...new Set(datosGlobales.map(d => d.origen))];
-
-    const selects = [
-        { id: "nombreSelect", valores: nombres },
-        { id: "codigoSelect", valores: codigos },
-        { id: "enfermedadSelect", valores: enfermedades },
-        { id: "origenSelect", valores: origenes }
-    ];
-
-    selects.forEach(s => {
-        const select = document.getElementById(s.id);
-        s.valores.forEach(v => {
-            let option = document.createElement("option");
-            option.value = v;
-            option.text = v;
-            select.appendChild(option);
-        });
-        select.addEventListener("change", actualizarGrafica);
+function llenarDropdown(id, valores) {
+    const select = document.getElementById(id);
+    valores.forEach(v => {
+        let option = document.createElement("option");
+        option.value = v;
+        option.text = v;
+        select.appendChild(option);
     });
+    select.addEventListener("change", actualizarGrafica);
 }
 
 function actualizarGrafica() {
 
-    const nombreFiltro = document.getElementById("nombreSelect").value;
-    const codigoFiltro = document.getElementById("codigoSelect").value;
-    const enfermedadFiltro = document.getElementById("enfermedadSelect").value;
-    const origenFiltro = document.getElementById("origenSelect").value;
+    const filtros = {
+        mes: document.getElementById("mesSelect").value,
+        nombre: document.getElementById("nombreSelect").value,
+        codigo: document.getElementById("codigoSelect").value,
+        enfermedad: document.getElementById("enfermedadSelect").value,
+        origen: document.getElementById("origenSelect").value
+    };
 
-    let datosFiltrados = datosGlobales.filter(d =>
-        (nombreFiltro === "Todos" || d.nombre === nombreFiltro) &&
-        (codigoFiltro === "Todos" || d.codigo === codigoFiltro) &&
-        (enfermedadFiltro === "Todos" || d.enfermedad === enfermedadFiltro) &&
-        (origenFiltro === "Todos" || d.origen === origenFiltro)
+    let filtrados = datos.filter(d =>
+        (filtros.mes === "Todos" || d.mes === filtros.mes) &&
+        (filtros.nombre === "Todos" || d.nombre === filtros.nombre) &&
+        (filtros.codigo === "Todos" || d.codigo === filtros.codigo) &&
+        (filtros.enfermedad === "Todos" || d.enfermedad === filtros.enfermedad) &&
+        (filtros.origen === "Todos" || d.origen === filtros.origen)
     );
 
-    let meses = {};
-    datosFiltrados.forEach(d => {
-        if (!meses[d.mes]) meses[d.mes] = 0;
-        meses[d.mes] += d.dias;
+    // Si no se filtra mes → mostrar por mes
+    let agrupado = {};
+
+    filtrados.forEach(d => {
+        if (!agrupado[d.mes]) agrupado[d.mes] = 0;
+        agrupado[d.mes] += d.dias;
     });
 
-    const labels = Object.keys(meses);
-    const data = Object.values(meses);
+    const labels = Object.keys(agrupado);
+    const valores = Object.values(agrupado);
 
     if (chart) chart.destroy();
 
-    chart = new Chart(document.getElementById("mesChart"), {
+    chart = new Chart(document.getElementById("chart"), {
         type: "bar",
         data: {
             labels: labels,
             datasets: [{
-                label: "Días de Incapacidad",
-                data: data
+                label: "Días Incapacidad",
+                data: valores
             }]
         }
     });
